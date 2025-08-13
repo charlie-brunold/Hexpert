@@ -76,7 +76,8 @@ class HexpertApp {
 
         // Handle AI responses
         this.socket.on('ai-response', (data) => {
-            console.log('AI Response:', data.text);
+            console.log('AI Response:', data.answer);
+            this.displayAIResponse(data.answer, data.timestamp);
             // TODO: Handle text-to-speech playback
         });
 
@@ -166,7 +167,26 @@ class HexpertApp {
         // Create new transcript entry
         const entry = document.createElement('div');
         entry.className = 'transcript-text';
-        entry.innerHTML = `<strong>[${new Date(timestamp).toLocaleTimeString()}]:</strong> ${text}`;
+        entry.innerHTML = `<strong>[${new Date(timestamp).toLocaleTimeString()}] You:</strong> ${text}`;
+        
+        transcriptBox.appendChild(entry);
+        transcriptBox.scrollTop = transcriptBox.scrollHeight;
+    }
+
+    /**
+     * Display AI response in the output area
+     */
+    displayAIResponse(response, timestamp) {
+        const transcriptBox = this.elements.transcriptOutput;
+        
+        // Create AI response entry
+        const entry = document.createElement('div');
+        entry.className = 'ai-response';
+        entry.style.backgroundColor = '#f0f8ff';
+        entry.style.padding = '10px';
+        entry.style.margin = '5px 0';
+        entry.style.borderLeft = '4px solid #2196F3';
+        entry.innerHTML = `<strong>[${new Date(timestamp).toLocaleTimeString()}] Hexpert:</strong><br>${response}`;
         
         transcriptBox.appendChild(entry);
         transcriptBox.scrollTop = transcriptBox.scrollHeight;

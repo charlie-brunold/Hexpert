@@ -4,10 +4,11 @@
  */
 
 class MunchkinExpert {
-    constructor() {
+    constructor(openaiClient) {
         this.gameName = "Steve Jackson Games' Munchkin";
         this.gameVersion = "Classic Munchkin";
         this.rulesKnowledge = this.initializeRulesKnowledge();
+        this.openai = openaiClient;
     }
 
     /**
@@ -52,15 +53,47 @@ class MunchkinExpert {
     }
 
     /**
-     * Process a user question about Munchkin rules
+     * Process a user question about Munchkin rules using OpenAI GPT
      * @param {string} question - The user's question about Munchkin
-     * @returns {string} - AI-formatted response about the rule
+     * @returns {string} - AI-generated response about the rule
      */
     async processQuestion(question) {
+        try {
+            // Use OpenAI GPT to generate intelligent responses
+            const response = await this.openai.chat.completions.create({
+                model: process.env.OPENAI_GPT_MODEL || 'gpt-3.5-turbo',
+                messages: [
+                    {
+                        role: 'system',
+                        content: this.getSystemPrompt()
+                    },
+                    {
+                        role: 'user',
+                        content: question
+                    }
+                ],
+                max_tokens: 300,
+                temperature: 0.7
+            });
+
+            return response.choices[0].message.content.trim();
+            
+        } catch (error) {
+            console.error('GPT processing error:', error);
+            // Fallback to keyword-based processing if GPT fails
+            return this.processQuestionFallback(question);
+        }
+    }
+
+    /**
+     * Fallback question processing using keyword matching
+     * @param {string} question - The user's question about Munchkin
+     * @returns {string} - Keyword-based response
+     */
+    processQuestionFallback(question) {
         // Convert question to lowercase for keyword matching
         const lowerQuestion = question.toLowerCase();
         
-        // Simple keyword-based responses (to be enhanced with OpenAI integration)
         if (lowerQuestion.includes('curse') || lowerQuestion.includes('curses')) {
             return this.explainCurseRules();
         }
@@ -129,6 +162,41 @@ class MunchkinExpert {
         return `I heard your question about "${question}" but I'm not sure how to answer that specific Munchkin rule question yet. ` +
                "Could you try rephrasing it, or ask about curses, combat, leveling, or game setup? " +
                "My knowledge base is still growing!";
+    }
+
+    /**
+     * Generate system prompt for GPT with comprehensive Munchkin rules
+     * @returns {string} - System prompt for GPT
+     */
+    getSystemPrompt() {
+        return `You are Hexpert, an AI assistant specializing in Steve Jackson Games' Munchkin board game rules. 
+
+You are knowledgeable about all aspects of Munchkin gameplay and should provide clear, accurate, and helpful answers to player questions.
+
+GAME OVERVIEW:
+- Objective: Be the first player to reach Level 10
+- Players: 3-6 players (best with 4-5)
+- Components: Door cards, Treasure cards, dice, level counters
+
+KEY RULES KNOWLEDGE:
+${JSON.stringify(this.rulesKnowledge, null, 2)}
+
+RESPONSE GUIDELINES:
+- Be conversational and friendly, like a knowledgeable game expert
+- Give concise but complete answers
+- If a rule has exceptions or special cases, mention them
+- If you're not certain about a specific rule interaction, say so
+- Keep responses under 200 words when possible
+- Use "you" to address the player directly
+
+EXAMPLE INTERACTIONS:
+User: "Can I curse myself?"
+Response: "Generally, no - most curse cards cannot be played on yourself unless the card specifically states otherwise. This prevents players from using curses strategically on themselves to avoid worse consequences."
+
+User: "What happens if I tie in combat?"
+Response: "If your total combat strength equals the monster's level exactly, you win the combat! You need to equal or exceed the monster's level to defeat it."
+
+Answer the user's Munchkin question now:`;
     }
 
     /**

@@ -10,6 +10,7 @@ const socketIo = require('socket.io');
 const path = require('path');
 const OpenAI = require('openai');
 const fs = require('fs');
+const MunchkinExpert = require('../games/munchkin');
 
 // Initialize Express app and HTTP server
 const app = express();
@@ -28,6 +29,9 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Initialize game expert with OpenAI client
+const munchkinExpert = new MunchkinExpert(openai);
+
 // Audio buffer management for each client
 const clientAudioBuffers = new Map();
 
@@ -39,6 +43,31 @@ app.use(express.static(path.join(__dirname, '../../public')));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../../public/index.html'));
 });
+
+/**
+ * Process transcribed question through game expert AI
+ */
+async function processQuestion(transcribedText, socket) {
+  try {
+    console.log('Processing question:', transcribedText);
+    
+    // Generate intelligent response using MunchkinExpert + GPT
+    const response = await munchkinExpert.processQuestion(transcribedText);
+    
+    // Send AI response back to client
+    socket.emit('ai-response', {
+      question: transcribedText,
+      answer: response,
+      timestamp: new Date().toISOString()
+    });
+    
+    console.log('AI Response:', response);
+    
+  } catch (error) {
+    console.error('Question processing error:', error);
+    socket.emit('error', { message: 'Failed to process your question' });
+  }
+}
 
 /**
  * Process audio buffer through OpenAI Whisper
@@ -61,7 +90,7 @@ async function transcribeAudio(audioBuffer, socket) {
     // Clean up temporary file
     fs.unlinkSync(tempFilePath);
     
-    // Send transcription back to client
+    // Send transcription back to client and process as question
     if (transcription.text.trim()) {
       socket.emit('transcription', {
         text: transcription.text,
@@ -69,6 +98,9 @@ async function transcribeAudio(audioBuffer, socket) {
       });
       
       console.log('Transcribed:', transcription.text);
+      
+      // Process transcribed text as a Munchkin question
+      await processQuestion(transcription.text, socket);
     }
     
   } catch (error) {
