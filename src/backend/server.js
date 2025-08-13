@@ -34,6 +34,7 @@ const munchkinExpert = new MunchkinExpert(openai);
 
 // Audio buffer management for each client
 const clientAudioBuffers = new Map();
+const clientProcessingFlags = new Map();
 
 // Middleware
 app.use(express.json());
@@ -119,10 +120,11 @@ async function processQuestion(transcribedText, socket) {
  * Process audio buffer through OpenAI Whisper
  */
 async function transcribeAudio(audioBuffer, socket) {
+  const tempFilePath = path.join(__dirname, `temp_audio_${socket.id}.webm`);
+  
   try {
-    // Create temporary file for audio processing
-    const tempFilePath = path.join(__dirname, `temp_audio_${socket.id}.webm`);
-    
+    // Set processing flag to prevent concurrent transcriptions
+    clientProcessingFlags.set(socket.id, true);
     // Validate audio buffer
     console.log(`Processing ${audioBuffer.length} audio chunks for transcription`);
     const totalBytes = audioBuffer.reduce((sum, chunk) => sum + chunk.length, 0);
@@ -149,9 +151,6 @@ async function transcribeAudio(audioBuffer, socket) {
       language: 'en'
     });
     
-    // Clean up temporary file
-    fs.unlinkSync(tempFilePath);
-    
     // Send transcription back to client and process as question
     if (transcription.text.trim()) {
       socket.emit('transcription', {
@@ -168,6 +167,19 @@ async function transcribeAudio(audioBuffer, socket) {
   } catch (error) {
     console.error('Transcription error:', error);
     socket.emit('error', { message: 'Transcription failed' });
+  } finally {
+    // Clear processing flag
+    clientProcessingFlags.set(socket.id, false);
+    
+    // Always clean up temporary file, regardless of success or failure
+    try {
+      if (fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+        console.log('Cleaned up temporary audio file');
+      }
+    } catch (cleanupError) {
+      console.error('Failed to clean up temporary file:', cleanupError);
+    }
   }
 }
 
@@ -175,12 +187,20 @@ async function transcribeAudio(audioBuffer, socket) {
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
   
-  // Initialize audio buffer for this client
+  // Initialize audio buffer and processing flag for this client
   clientAudioBuffers.set(socket.id, []);
+  clientProcessingFlags.set(socket.id, false);
 
   // Handle audio stream from client
   socket.on('audio-stream', (audioData) => {
     console.log('Received audio data from client');
+    
+    // Check if already processing to prevent concurrent transcriptions
+    const isProcessing = clientProcessingFlags.get(socket.id) || false;
+    if (isProcessing) {
+      console.log('Skipping audio chunk - transcription in progress');
+      return;
+    }
     
     // Get client's audio buffer
     const audioBuffer = clientAudioBuffers.get(socket.id) || [];
@@ -194,12 +214,14 @@ io.on('connection', (socket) => {
     
     // Process transcription every 2 seconds of audio data (approximately 20 chunks at 100ms each)
     if (audioBuffer.length >= 20) {
-      // Process current buffer (make a deep copy to avoid reference issues)
-      const bufferCopy = audioBuffer.map(chunk => Buffer.from(chunk));
-      transcribeAudio(bufferCopy, socket);
+      // Process current buffer (make a shallow copy to avoid reference issues)
+      const bufferCopy = [...audioBuffer];
       
-      // Clear buffer for next batch
+      // Clear buffer for next batch BEFORE processing to avoid race conditions
       clientAudioBuffers.set(socket.id, []);
+      
+      // Process the copied buffer
+      transcribeAudio(bufferCopy, socket);
     }
   });
 
@@ -211,8 +233,9 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
-    // Clean up client audio buffer
+    // Clean up client audio buffer and processing flag
     clientAudioBuffers.delete(socket.id);
+    clientProcessingFlags.delete(socket.id);
   });
 });
 
