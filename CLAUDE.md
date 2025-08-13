@@ -42,8 +42,8 @@ The application handles real-time audio streaming:
 4. ✅ Transcribed text is sent back to frontend and displayed in transcript area
 5. ✅ **NEW**: Transcribed questions processed through MunchkinExpert + GPT for intelligent responses
 6. ✅ **NEW**: AI responses displayed in frontend with conversation formatting
-7. TODO: Generated responses flow back through TTS-1
-8. TODO: Audio response streams back to frontend for playback
+7. ✅ **NEW**: Generated responses flow back through TTS-1 for voice synthesis
+8. ✅ **NEW**: Audio response streams back to frontend for automatic playback
 
 ## Wake Word Detection
 
@@ -104,12 +104,17 @@ Hexpert/
 - ✅ **NEW**: OpenAI GPT integration for intelligent responses via MunchkinExpert
 - ✅ **NEW**: Question processing pipeline that triggers after transcription
 - ✅ **NEW**: AI response generation and socket emission to frontend
-- TODO: Integrate OpenAI TTS for voice responses
+- ✅ **NEW**: OpenAI TTS-1 integration for voice response synthesis
+- ✅ **NEW**: Parallel TTS audio generation with base64 streaming to frontend
+- ✅ **NEW**: Comprehensive temporary file management and cleanup for TTS
 
 ### Frontend Classes
 - **HexpertApp** (`public/app.js`): Main application coordinator, handles UI interactions and socket communication
 - ✅ **NEW**: AI response display with conversation formatting and timestamps
 - ✅ **NEW**: Enhanced transcript display showing "You:" vs "Hexpert:" responses
+- ✅ **NEW**: TTS audio playback with base64 decoding and automatic audio management
+- ✅ **NEW**: Visual audio playing indicators with speaker emoji during TTS playback
+- ✅ **NEW**: Comprehensive audio error handling and resource cleanup
 - **AudioHandler** (`public/audio-handler.js`): Manages microphone access, audio streaming via Socket.IO, and wake word detection
 
 ### Game System
@@ -135,11 +140,12 @@ Hexpert/
 - ✅ **NEW**: **MunchkinExpert enhanced with GPT-powered question processing**
 - ✅ **NEW**: **Frontend conversation display with AI responses**
 - ✅ **NEW**: **Error handling and fallback systems for AI processing**
+- ✅ **NEW**: **OpenAI TTS-1 integration for voice response synthesis**
+- ✅ **NEW**: **Complete audio response streaming and playback pipeline**
+- ✅ **NEW**: **Full voice loop: Speech → Transcription → AI Response → TTS → Audio Playback**
 
 ### 🔄 In Progress / TODO
-- OpenAI TTS integration for voice responses
 - Wake word detection implementation
-- Audio response streaming back to frontend
 - Test coverage
 
 ## Debugging and Diagnostics
@@ -152,6 +158,9 @@ Hexpert/
 - ✅ OpenAI API errors are caught and logged
 - ✅ **NEW**: Question processing and GPT response generation logged
 - ✅ **NEW**: AI response content logged for debugging
+- ✅ **NEW**: TTS generation process and completion logged
+- ✅ **NEW**: TTS audio file creation and streaming logged
+- ✅ **NEW**: Background TTS failures logged separately from main response flow
 - Wake word detection events are logged
 - Run with `npm run dev` for auto-restart during development
 
@@ -164,9 +173,15 @@ Hexpert/
 - ✅ Error messages displayed in transcript area for API failures
 - Browser console logs audio events and socket communication
 - ✅ **NEW**: AI response data logged to browser console
+- ✅ **NEW**: TTS audio reception and playback events logged
+- ✅ **NEW**: Visual audio playing indicators (🔊) during TTS playback
+- ✅ **NEW**: Audio playback errors displayed in transcript with fallback handling
 
 ### Common Issues
 - Microphone permissions: Ensure HTTPS in production or localhost for development
 - CORS issues: Server configured to allow all origins during development
 - Socket.IO connection: Check browser console for connection errors
 - ✅ Audio transcription: WebM audio files are temporarily created and cleaned up automatically
+- ✅ **NEW**: TTS audio playback: MP3 audio files are temporarily created and cleaned up automatically
+- ✅ **NEW**: Browser audio autoplay: Modern browsers may require user interaction before audio playback
+- ✅ **NEW**: TTS failures are isolated: Text responses will still work even if TTS generation fails

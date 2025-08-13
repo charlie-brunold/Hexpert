@@ -78,7 +78,12 @@ class HexpertApp {
         this.socket.on('ai-response', (data) => {
             console.log('AI Response:', data.answer);
             this.displayAIResponse(data.answer, data.timestamp);
-            // TODO: Handle text-to-speech playback
+        });
+
+        // Handle TTS audio responses
+        this.socket.on('tts-audio', (data) => {
+            console.log('TTS Audio received:', data.timestamp);
+            this.playTTSAudio(data.audio, data.timestamp);
         });
 
         // Handle errors
@@ -197,6 +202,75 @@ class HexpertApp {
      */
     clearTranscript() {
         this.elements.transcriptOutput.innerHTML = '<p class="placeholder">Transcribed speech will appear here...</p>';
+    }
+
+    /**
+     * Play TTS audio response
+     */
+    async playTTSAudio(base64Audio, timestamp) {
+        try {
+            // Convert base64 to blob
+            const audioData = atob(base64Audio);
+            const audioArray = new Uint8Array(audioData.length);
+            for (let i = 0; i < audioData.length; i++) {
+                audioArray[i] = audioData.charCodeAt(i);
+            }
+            
+            const audioBlob = new Blob([audioArray], { type: 'audio/mpeg' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            
+            // Create and play audio element
+            const audio = new Audio(audioUrl);
+            
+            // Add visual indicator
+            this.showAudioPlayingIndicator();
+            
+            // Play the audio
+            await audio.play();
+            
+            // Clean up when audio finishes
+            audio.addEventListener('ended', () => {
+                URL.revokeObjectURL(audioUrl);
+                this.hideAudioPlayingIndicator();
+                console.log('TTS audio playback completed');
+            });
+            
+            // Handle playback errors
+            audio.addEventListener('error', (e) => {
+                console.error('Audio playback error:', e);
+                URL.revokeObjectURL(audioUrl);
+                this.hideAudioPlayingIndicator();
+                this.displayError('Audio playback failed');
+            });
+            
+        } catch (error) {
+            console.error('TTS playback error:', error);
+            this.displayError('Failed to play audio response');
+        }
+    }
+
+    /**
+     * Show audio playing indicator
+     */
+    showAudioPlayingIndicator() {
+        // Add playing indicator to the latest AI response
+        const responses = this.elements.transcriptOutput.querySelectorAll('.ai-response');
+        if (responses.length > 0) {
+            const latestResponse = responses[responses.length - 1];
+            const indicator = document.createElement('span');
+            indicator.className = 'audio-playing-indicator';
+            indicator.innerHTML = ' 🔊';
+            indicator.style.color = '#4CAF50';
+            latestResponse.appendChild(indicator);
+        }
+    }
+
+    /**
+     * Hide audio playing indicator
+     */
+    hideAudioPlayingIndicator() {
+        const indicators = this.elements.transcriptOutput.querySelectorAll('.audio-playing-indicator');
+        indicators.forEach(indicator => indicator.remove());
     }
 
     /**

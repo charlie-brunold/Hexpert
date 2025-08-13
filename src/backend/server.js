@@ -45,6 +45,47 @@ app.get('/', (req, res) => {
 });
 
 /**
+ * Generate TTS audio from text response
+ */
+async function generateTTSAudio(text, socket) {
+  try {
+    console.log('Generating TTS for:', text.substring(0, 50) + '...');
+    
+    // Generate speech using OpenAI TTS
+    const mp3 = await openai.audio.speech.create({
+      model: process.env.OPENAI_TTS_MODEL || 'tts-1',
+      voice: 'alloy', // You can change this to nova, echo, fable, onyx, or shimmer
+      input: text,
+      response_format: 'mp3'
+    });
+    
+    // Convert response to buffer
+    const buffer = Buffer.from(await mp3.arrayBuffer());
+    
+    // Create temporary file for audio
+    const tempAudioPath = path.join(__dirname, `temp_tts_${socket.id}.mp3`);
+    fs.writeFileSync(tempAudioPath, buffer);
+    
+    // Read audio file and send to client
+    const audioData = fs.readFileSync(tempAudioPath);
+    socket.emit('tts-audio', {
+      audio: audioData.toString('base64'),
+      timestamp: new Date().toISOString()
+    });
+    
+    // Clean up temporary file
+    fs.unlinkSync(tempAudioPath);
+    
+    console.log('TTS audio generated and sent to client');
+    
+  } catch (error) {
+    console.error('TTS generation error:', error);
+    // Don't emit error for TTS failures - text response is already sent
+    console.log('TTS failed, but text response was already delivered');
+  }
+}
+
+/**
  * Process transcribed question through game expert AI
  */
 async function processQuestion(transcribedText, socket) {
@@ -54,7 +95,7 @@ async function processQuestion(transcribedText, socket) {
     // Generate intelligent response using MunchkinExpert + GPT
     const response = await munchkinExpert.processQuestion(transcribedText);
     
-    // Send AI response back to client
+    // Send AI response back to client immediately for fast feedback
     socket.emit('ai-response', {
       question: transcribedText,
       answer: response,
@@ -62,6 +103,11 @@ async function processQuestion(transcribedText, socket) {
     });
     
     console.log('AI Response:', response);
+    
+    // Generate TTS audio in parallel (don't await to avoid blocking)
+    generateTTSAudio(response, socket).catch(error => {
+      console.error('Background TTS generation failed:', error);
+    });
     
   } catch (error) {
     console.error('Question processing error:', error);
@@ -77,8 +123,24 @@ async function transcribeAudio(audioBuffer, socket) {
     // Create temporary file for audio processing
     const tempFilePath = path.join(__dirname, `temp_audio_${socket.id}.webm`);
     
+    // Validate audio buffer
+    console.log(`Processing ${audioBuffer.length} audio chunks for transcription`);
+    const totalBytes = audioBuffer.reduce((sum, chunk) => sum + chunk.length, 0);
+    console.log(`Total audio data: ${totalBytes} bytes`);
+    
+    // Ensure all chunks are valid Buffers
+    const validBuffers = audioBuffer.filter(chunk => Buffer.isBuffer(chunk) && chunk.length > 0);
+    if (validBuffers.length === 0) {
+      throw new Error('No valid audio data to process');
+    }
+    
     // Write audio buffer to temporary file
-    fs.writeFileSync(tempFilePath, Buffer.concat(audioBuffer));
+    const combinedBuffer = Buffer.concat(validBuffers);
+    fs.writeFileSync(tempFilePath, combinedBuffer);
+    
+    // Verify file was created and has content
+    const fileStats = fs.statSync(tempFilePath);
+    console.log(`Created temporary audio file: ${fileStats.size} bytes`);
     
     // Transcribe with OpenAI Whisper
     const transcription = await openai.audio.transcriptions.create({
@@ -123,14 +185,18 @@ io.on('connection', (socket) => {
     // Get client's audio buffer
     const audioBuffer = clientAudioBuffers.get(socket.id) || [];
     
+    // Ensure audioData is properly converted to Buffer
+    const audioChunk = Buffer.isBuffer(audioData) ? audioData : Buffer.from(audioData);
+    
     // Add new audio chunk to buffer
-    audioBuffer.push(audioData);
+    audioBuffer.push(audioChunk);
     clientAudioBuffers.set(socket.id, audioBuffer);
     
     // Process transcription every 2 seconds of audio data (approximately 20 chunks at 100ms each)
     if (audioBuffer.length >= 20) {
-      // Process current buffer
-      transcribeAudio([...audioBuffer], socket);
+      // Process current buffer (make a deep copy to avoid reference issues)
+      const bufferCopy = audioBuffer.map(chunk => Buffer.from(chunk));
+      transcribeAudio(bufferCopy, socket);
       
       // Clear buffer for next batch
       clientAudioBuffers.set(socket.id, []);
