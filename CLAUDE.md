@@ -15,7 +15,7 @@ The application follows a real-time, voice-first architecture:
 - **Real-time Communication**: Socket.IO for bidirectional audio streaming between client and server
 - **AI Services**: OpenAI API integration for the complete voice pipeline:
   - Whisper for speech-to-text transcription
-  - GPT-4o/GPT-3.5-Turbo for intelligent response generation
+  - GPT-3.5-Turbo for intelligent response generation
   - TTS-1 for text-to-speech synthesis
 
 ## Development Philosophy
@@ -87,7 +87,7 @@ Hexpert/
 
 1. Copy `.env.example` to `.env`
 2. Add your OpenAI API key
-3. Configure optional model preferences (defaults: gpt-4, whisper-1, tts-1)
+3. Configure optional model preferences (defaults: gpt-3.5-turbo, whisper-1, tts-1)
 4. Run `npm install` to install dependencies
 5. Run `npm run dev` for development
 
