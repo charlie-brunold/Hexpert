@@ -40,8 +40,10 @@ The application handles real-time audio streaming:
 2. Audio streams to backend via Socket.IO in real-time
 3. ✅ Backend buffers audio chunks and processes through OpenAI Whisper every 2 seconds
 4. ✅ Transcribed text is sent back to frontend and displayed in transcript area
-5. TODO: Generated responses flow back through TTS-1
-6. TODO: Audio response streams back to frontend for playback
+5. ✅ **NEW**: Transcribed questions processed through MunchkinExpert + GPT for intelligent responses
+6. ✅ **NEW**: AI responses displayed in frontend with conversation formatting
+7. TODO: Generated responses flow back through TTS-1
+8. TODO: Audio response streams back to frontend for playback
 
 ## Wake Word Detection
 
@@ -99,17 +101,23 @@ Hexpert/
 - ✅ OpenAI Whisper integration implemented for speech-to-text transcription
 - Real-time audio buffer management with 2-second processing windows
 - Automatic temporary file handling and cleanup for Whisper API
-- TODO: Integrate OpenAI GPT for intelligent responses
+- ✅ **NEW**: OpenAI GPT integration for intelligent responses via MunchkinExpert
+- ✅ **NEW**: Question processing pipeline that triggers after transcription
+- ✅ **NEW**: AI response generation and socket emission to frontend
 - TODO: Integrate OpenAI TTS for voice responses
 
 ### Frontend Classes
 - **HexpertApp** (`public/app.js`): Main application coordinator, handles UI interactions and socket communication
+- ✅ **NEW**: AI response display with conversation formatting and timestamps
+- ✅ **NEW**: Enhanced transcript display showing "You:" vs "Hexpert:" responses
 - **AudioHandler** (`public/audio-handler.js`): Manages microphone access, audio streaming via Socket.IO, and wake word detection
 
 ### Game System
-- **MunchkinExpert** (`src/games/munchkin.js`): Comprehensive Munchkin rules knowledge base with keyword-based question processing
+- **MunchkinExpert** (`src/games/munchkin.js`): Comprehensive Munchkin rules knowledge base with GPT-powered question processing
+- ✅ **NEW**: OpenAI GPT integration with specialized Munchkin system prompt
+- ✅ **NEW**: Intelligent rule interpretation and conversational responses
+- ✅ **NEW**: Fallback to keyword-based processing if GPT fails
 - Modular design allows easy addition of new game experts
-- TODO: Integrate with OpenAI for more sophisticated question processing
 
 ## Current Implementation Status
 
@@ -119,13 +127,16 @@ Hexpert/
 - Frontend UI with game selector and audio controls
 - Audio capture and streaming infrastructure
 - Comprehensive Munchkin rules knowledge base
-- Basic keyword-based question processing
 - **OpenAI Whisper integration for speech-to-text transcription**
 - **Real-time audio processing pipeline with buffering and cleanup**
 - **Environment variable configuration and OpenAI client setup**
+- ✅ **NEW**: **OpenAI GPT integration for intelligent Munchkin rule responses**
+- ✅ **NEW**: **Complete voice-to-text-to-AI-response pipeline**
+- ✅ **NEW**: **MunchkinExpert enhanced with GPT-powered question processing**
+- ✅ **NEW**: **Frontend conversation display with AI responses**
+- ✅ **NEW**: **Error handling and fallback systems for AI processing**
 
 ### 🔄 In Progress / TODO
-- OpenAI GPT integration for intelligent responses
 - OpenAI TTS integration for voice responses
 - Wake word detection implementation
 - Audio response streaming back to frontend
@@ -139,6 +150,8 @@ Hexpert/
 - ✅ Whisper transcription results are logged to console
 - ✅ Audio buffer management and processing timing logged
 - ✅ OpenAI API errors are caught and logged
+- ✅ **NEW**: Question processing and GPT response generation logged
+- ✅ **NEW**: AI response content logged for debugging
 - Wake word detection events are logged
 - Run with `npm run dev` for auto-restart during development
 
@@ -146,12 +159,14 @@ Hexpert/
 - Connection status displayed in UI
 - Listening status displayed in UI
 - ✅ Transcript output area displays real-time speech-to-text results
+- ✅ **NEW**: AI responses displayed with conversation formatting and styling
+- ✅ **NEW**: Conversation flow shows both user questions and Hexpert responses
 - ✅ Error messages displayed in transcript area for API failures
 - Browser console logs audio events and socket communication
+- ✅ **NEW**: AI response data logged to browser console
 
 ### Common Issues
 - Microphone permissions: Ensure HTTPS in production or localhost for development
 - CORS issues: Server configured to allow all origins during development
 - Socket.IO connection: Check browser console for connection errors
-- ✅ OpenAI API key: Ensure OPENAI_API_KEY is properly set in .env file
 - ✅ Audio transcription: WebM audio files are temporarily created and cleaned up automatically
