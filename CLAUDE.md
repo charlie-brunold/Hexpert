@@ -36,11 +36,12 @@ The codebase is designed with a modular game system in mind:
 ## Audio Processing Pipeline
 
 The application handles real-time audio streaming:
-1. Frontend captures microphone input via Web Audio API
-2. Audio streams to backend via Socket.IO
-3. Backend processes audio through OpenAI Whisper
-4. Generated responses flow back through TTS-1
-5. Audio response streams back to frontend for playback
+1. Frontend captures microphone input via Web Audio API (100ms chunks)
+2. Audio streams to backend via Socket.IO in real-time
+3. ✅ Backend buffers audio chunks and processes through OpenAI Whisper every 2 seconds
+4. ✅ Transcribed text is sent back to frontend and displayed in transcript area
+5. TODO: Generated responses flow back through TTS-1
+6. TODO: Audio response streams back to frontend for playback
 
 ## Wake Word Detection
 
@@ -95,8 +96,11 @@ Hexpert/
 ### Backend (`src/backend/server.js`)
 - Express server serving static files from `public/`
 - Socket.IO server handling real-time audio streaming
-- Currently has placeholder handlers for audio processing and wake word detection
-- TODO: Integrate OpenAI Whisper, GPT, and TTS services
+- ✅ OpenAI Whisper integration implemented for speech-to-text transcription
+- Real-time audio buffer management with 2-second processing windows
+- Automatic temporary file handling and cleanup for Whisper API
+- TODO: Integrate OpenAI GPT for intelligent responses
+- TODO: Integrate OpenAI TTS for voice responses
 
 ### Frontend Classes
 - **HexpertApp** (`public/app.js`): Main application coordinator, handles UI interactions and socket communication
@@ -116,9 +120,11 @@ Hexpert/
 - Audio capture and streaming infrastructure
 - Comprehensive Munchkin rules knowledge base
 - Basic keyword-based question processing
+- **OpenAI Whisper integration for speech-to-text transcription**
+- **Real-time audio processing pipeline with buffering and cleanup**
+- **Environment variable configuration and OpenAI client setup**
 
 ### 🔄 In Progress / TODO
-- OpenAI Whisper integration for speech-to-text
 - OpenAI GPT integration for intelligent responses
 - OpenAI TTS integration for voice responses
 - Wake word detection implementation
@@ -130,16 +136,22 @@ Hexpert/
 ### Server-side Debugging
 - Server logs socket connections/disconnections
 - Audio stream reception is logged
+- ✅ Whisper transcription results are logged to console
+- ✅ Audio buffer management and processing timing logged
+- ✅ OpenAI API errors are caught and logged
 - Wake word detection events are logged
 - Run with `npm run dev` for auto-restart during development
 
 ### Frontend Debugging
 - Connection status displayed in UI
 - Listening status displayed in UI
-- Transcript output area for debugging speech-to-text
+- ✅ Transcript output area displays real-time speech-to-text results
+- ✅ Error messages displayed in transcript area for API failures
 - Browser console logs audio events and socket communication
 
 ### Common Issues
 - Microphone permissions: Ensure HTTPS in production or localhost for development
 - CORS issues: Server configured to allow all origins during development
 - Socket.IO connection: Check browser console for connection errors
+- ✅ OpenAI API key: Ensure OPENAI_API_KEY is properly set in .env file
+- ✅ Audio transcription: WebM audio files are temporarily created and cleaned up automatically
