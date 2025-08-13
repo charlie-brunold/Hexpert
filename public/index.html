@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hexpert - Your Board Game AI Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎲 Hexpert</h1>
+            <p>Your AI Board Game Assistant</p>
+        </header>
+
+        <main>
+            <div class="game-selector">
+                <label for="game-mode">Select Game Mode:</label>
+                <select id="game-mode">
+                    <option value="munchkin">Steve Jackson's Munchkin</option>
+                    <!-- Future games will be added here -->
+                </select>
+            </div>
+
+            <div class="audio-controls">
+                <button id="start-listening" class="btn-primary">
+                    🎤 Start Voice Assistant
+                </button>
+                <button id="stop-listening" class="btn-secondary" disabled>
+                    🔇 Stop Listening
+                </button>
+            </div>
+
+            <div class="status-display">
+                <div id="connection-status" class="status-item">
+                    <span class="status-label">Connection:</span>
+                    <span id="connection-indicator" class="status-disconnected">Disconnected</span>
+                </div>
+                <div id="listening-status" class="status-item">
+                    <span class="status-label">Listening:</span>
+                    <span id="listening-indicator" class="status-inactive">Inactive</span>
+                </div>
+            </div>
+
+            <div class="transcript-display">
+                <h3>Speech to Text Output:</h3>
+                <div id="transcript-output" class="transcript-box">
+                    <p class="placeholder">Transcribed speech will appear here...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="audio-handler.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

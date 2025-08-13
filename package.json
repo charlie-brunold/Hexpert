@@ -1,0 +1,33 @@
+{
+  "name": "hexpert",
+  "version": "1.0.0",
+  "description": "Voice-based AI assistant for board game rules and gameplay questions",
+  "main": "src/backend/server.js",
+  "scripts": {
+    "start": "node src/backend/server.js",
+    "dev": "nodemon src/backend/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "board-games",
+    "ai-assistant",
+    "voice-interface",
+    "openai",
+    "websockets"
+  ],
+  "author": "Charlie Brunold",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "openai": "^4.20.1",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
